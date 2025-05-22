@@ -1,6 +1,8 @@
 import sqlite3
 
 from langchain_core.tools import tool
+from langchain_community.chat_models import ChatOllama
+from langchain_core.messages import HumanMessage
 
 
 @tool
@@ -125,3 +127,35 @@ def summarize_sql_result(sql_result: list, user_query: str) -> str:
         rows = ["; ".join(f"{k}: {r[k]}" for k in keys) for r in sql_result]
         return f"Результаты по запросу '{user_query}':\n" + "\n".join(rows)
     return f"Результат: {sql_result}"
+
+# from langchain_core.tools import tool
+# from langchain_community.chat_models import ChatOllama
+# from langchain_core.messages import HumanMessage
+
+
+# @tool
+# def summarize_sql_result(sql_result: list, user_query: str) -> str:
+#     """
+#     Преобразует результат SQL-запроса в человекочитаемый текст с помощью LLM.
+
+#     Args:
+#         sql_result: Результат выполнения SQL-запроса (список словарей).
+#         user_query: Оригинальный запрос пользователя для контекста ответа.
+
+#     Returns:
+#         Текстовое описание результата.
+#     """
+
+#     if not sql_result:
+#         return "По вашему запросу данных не найдено."
+
+#     prompt = (
+#         f"Пользователь задал вопрос: '{user_query}'.\n"
+#         f"Результат SQL-запроса:\n{sql_result}\n\n"
+#         "Сформулируй краткий и понятный для человека вывод на основе результата."
+#     )
+
+#     model = ChatOllama(model="gemma3:1b", temperature=0.1)
+#     response = model.invoke([HumanMessage(content=prompt)])
+
+#     return response.content

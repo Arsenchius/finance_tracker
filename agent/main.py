@@ -1,7 +1,6 @@
 import uuid
 
 from langchain_openai import ChatOpenAI
-from langchain_community.chat_models import ChatOllama
 from langgraph.prebuilt import create_react_agent
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -17,10 +16,12 @@ from tools import (
 
 SYSTEM_PROMPT = """
     Ты — финансовый помощник. Помогаешь пользователю вести учёт расходов и доходов,
-    отвечаешь на вопросы о тратах, доходах, категории и периодах.
+    отвечаешь на вопросы о тратах, доходах, категориях и периодах.
     Ты можешь добавлять записи, изменять их, удалять (только после подтверждения),
     а также выполнять аналитические запросы к базе данных и возвращать краткие, понятные ответы.
+
     Если запрос связан с удалением данных — обязательно уточни, действительно ли пользователь хочет это сделать.
+    Если пользователь использует слова вроде «вчера», «прошлый месяц», ты обязан сам преобразовать их в конкретную дату в формате YYYY-MM-DD.
 
     Примеры запросов пользователя и как ты на них реагируешь:
 
@@ -30,7 +31,7 @@ SYSTEM_PROMPT = """
     {
     "category": "продукты",
     "amount": 700,
-    "date": "<вчерашняя дата в формате YYYY-MM-DD>",
+    "date": "2025-05-21",  // если сегодня 22 мая
     "type": "expense",
     "user_id": "user_123"
     }
@@ -50,7 +51,7 @@ SYSTEM_PROMPT = """
     Ты вызываешь `query_analytics` с SQL-запросом:
     SELECT SUM(amount) FROM transactions WHERE user_id = '{user_id}' AND category = 'еда' AND strftime('%m', date) = '04';
 
-    И затем передаёшь результат в `summarize_sql_result` для генерации ответа.
+    Затем ты передаёшь результат в `summarize_sql_result`, чтобы сформулировать краткий человекочитаемый ответ.
 """
 
 
@@ -59,7 +60,7 @@ class FinanceAgent:
         # self.model = ChatOllama(model="llama3", temperature=0.1)
         self._model = ChatOpenAI(
             api_key="ollama",
-            model="llama3.2:1b",
+            model="phi4-mini:3.8b",
             base_url="http://localhost:11434/v1",
         )
         self._agent = create_react_agent(
@@ -90,7 +91,7 @@ if __name__ == "__main__":
     while True:
         try:
             query = input("Вы: ")
-            response = agent.invoke(query)
+            response = agent.invoke(f"Пользователь с ID user_1 дал команду: {query}")
             print(f"Агент: {response}")
         except KeyboardInterrupt:
             print("До свидания!")
